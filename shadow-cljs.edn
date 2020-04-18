@@ -8,6 +8,10 @@
  []
 
  :builds
- {:app {:target :node-script
-        :main scrap.scrap/main
-        :output-to "dist/out.js"}}}
+ {:node {:target :node-script
+         :main scrap.scrap/main
+         :output-to "node-out/out.js"}
+  :browser {:target :browser
+            :output-dir "public/js"
+            :asset-path "/js"
+            :modules {:main {:init-fn scrap.scrap/mainz}}}}}
