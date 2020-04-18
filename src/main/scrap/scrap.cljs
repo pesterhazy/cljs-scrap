@@ -1,6 +1,6 @@
 (ns scrap.scrap)
 
-(defn main []
-  (prn :welcome))
+(defn ^:export main []
+  (prn :main))
 
 (prn :init)
