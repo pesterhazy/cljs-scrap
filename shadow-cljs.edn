@@ -14,4 +14,5 @@
   :browser {:target :browser
             :output-dir "public/js"
             :asset-path "/js"
+            :devtools {:after-load scrap.scrap/main}
             :modules {:main {:entries [scrap.scrap]}}}}}

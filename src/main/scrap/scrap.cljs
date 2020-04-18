@@ -2,5 +2,3 @@
 
 (defn ^:export main []
   (prn :main))
-
-(prn :init)
