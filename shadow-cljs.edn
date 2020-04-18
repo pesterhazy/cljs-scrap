@@ -1,0 +1,13 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/dev"
+  "src/main"
+  "src/test"]
+
+ :dependencies
+ []
+
+ :builds
+ {:app {:target :node-script
+        :main scrap.scrap/main
+        :output-to "dist/out.js"}}}
