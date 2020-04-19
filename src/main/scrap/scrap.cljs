@@ -87,7 +87,7 @@
 
 (defn ^:export main []
   (println "*** start")
-  (let [n 2
+  (let [n 10
         world (make-world n)]
     (-> (->> (range n)
              (map (fn [i] (critical+ world #(process+ world i) i 0)))
