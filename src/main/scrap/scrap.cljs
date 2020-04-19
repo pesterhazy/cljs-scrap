@@ -10,21 +10,21 @@
         (.then (fn []
                  (swap! (:!state o) assoc-in path v)))))
 
-(defn banana+ [{:keys [!critical]}]
+(defn banana+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
       (.then (fn []
                (when @!critical
                  (throw (js/Error. "Another process is already in critical section")))
-               (prn [::enter])
+               (prn [::enter id])
                (reset! !critical true)))
       (.then (fn []
                ;; wait?
                ))
       (.then (fn []
-               (prn [::leave])
+               (prn [::leave id])
                (reset! !critical false)))))
 
 (defn ^:export main []
-  (-> (banana+ (make-world))
+  (-> (banana+ (make-world) 0)
       (.then (fn []
-               (prn :ok)))))
+               (prn [::done])))))
