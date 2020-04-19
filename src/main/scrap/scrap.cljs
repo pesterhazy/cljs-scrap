@@ -37,6 +37,7 @@
                               (-> (js/Promise.resolve
                                    (when b-k (write+ world [:k] i)))
                                   (.then (fn []
+                                           (prn [::fail1])
                                            (critical+ world fun+ i (inc rc))))))))
                  (-> (write+ world [:c i] false)
                      (.then (fn []
@@ -44,14 +45,17 @@
                                    (reduce
                                     (fn [p j]
                                       (-> p
-                                          (.then (fn [break?]
-                                                   (read+ world [:c j])
-                                                   (.then (fn [c-j]
-                                                            (and break? (not= j i) (not c-j))))))))
+                                          (.then
+                                           (fn [break?]
+                                             (read+ world [:c j])
+                                             (.then (fn [c-j]
+                                                      (and break? (not= j i) (not c-j))))))))
                                     (js/Promise.resolve false)))))
                      (.then (fn [break?]
                               (if break?
-                                (critical+ world fun+ i (inc rc))
+                                (do
+                                  (prn [::fail2])
+                                  (critical+ world fun+ i (inc rc)))
                                 (-> (js/Promise.resolve (fun+))
                                     (.then (fn []
                                              (js/Promise.all [(write+ world [:c i] true)
