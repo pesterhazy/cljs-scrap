@@ -98,7 +98,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main code
 
-(defn dijkstra+ [{:keys [n] :as world} fun+ i]
+(defn dijkstra+
+  "Implementation of the algorithm described in E.W. Dijkstra, \"Solution
+  of a problem in concurrent programming control\" (1965)"
+  [{:keys [n] :as world} fun+ i]
   (js/Promise.
    (fn [resolve reject]
      ((fn step []
