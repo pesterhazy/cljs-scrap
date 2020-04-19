@@ -75,12 +75,23 @@
                       (reject e)))))
       0))))
 
+(defn advance+ [clock]
+  (js/Promise. (fn [resolve]
+                 ((fn step [n]
+                    (if (< n 10000)
+                      (do
+                        (.tick clock 1)
+                        (.then (js/Promise.resolve) #(step (inc n))))
+                      (resolve)))
+                  0))))
+
 (defn with-fake-clock+ [fun+]
-  (let [clock (fake-timers/install #js{:shouldAdvanceTime true
-                                       :advanceTimeDelta 5})]
+  (let [clock (fake-timers/install)]
     (prn [::installed])
     (-> (js/Promise.resolve)
-        (.then fun+)
+        (.then (fn []
+                 (js/Promise.all [(-> (fun+)
+                                      (.then (fn [] (prn :xxx)))) (advance+ clock)])))
         (.finally (fn []
                     (prn [::uninstalling])
                     (.uninstall clock)
