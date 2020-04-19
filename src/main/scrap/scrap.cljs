@@ -1,17 +1,20 @@
 (ns scrap.scrap)
 
 (defn make-world [n]
-  {:n n
-   :!critical (atom nil)
-   :!state (atom {:k -1
-                  :b (vec (repeat n true))
-                  :c (vec (repeat n true))})})
+  (let [state {:k -1
+               :b (vec (repeat n true))
+               :c (vec (repeat n true))}]
+    (prn state)
+    {:n n
+     :!critical (atom nil)
+     :!state (atom state)}))
 
 (defn write+ [{:keys [!state]} path v]
   (-> (js/Promise.resolve)
       ;; TODO: delay?
       (.then (fn []
-               (swap! !state assoc-in path v)))))
+               (swap! !state assoc-in path v)
+               (prn @!state)))))
 
 (defn read+ [{:keys [!state]} path]
   (-> (js/Promise.resolve)
@@ -39,27 +42,29 @@
                                   (.then (fn []
                                            (prn [::fail1])
                                            (critical+ world fun+ i (inc rc))))))))
-                 (-> (write+ world [:c i] false)
-                     (.then (fn []
-                              (->> (range n)
-                                   (reduce
-                                    (fn [p j]
-                                      (-> p
-                                          (.then
-                                           (fn [break?]
-                                             (read+ world [:c j])
-                                             (.then (fn [c-j]
-                                                      (and break? (not= j i) (not c-j))))))))
-                                    (js/Promise.resolve false)))))
-                     (.then (fn [break?]
-                              (if break?
-                                (do
-                                  (prn [::fail2])
-                                  (critical+ world fun+ i (inc rc)))
-                                (-> (js/Promise.resolve (fun+))
-                                    (.then (fn []
-                                             (js/Promise.all [(write+ world [:c i] true)
-                                                              (write+ world [:b i] true)])))))))))))))
+                 (do
+                   (prn :aha)
+                   (-> (write+ world [:c i] false)
+                       (.then (fn []
+                                (->> (range n)
+                                     (reduce
+                                      (fn [p j]
+                                        (-> p
+                                            (.then
+                                             (fn [break?]
+                                               (read+ world [:c j])
+                                               (.then (fn [c-j]
+                                                        (and break? (not= j i) (not c-j))))))))
+                                      (js/Promise.resolve false)))))
+                       (.then (fn [break?]
+                                (if break?
+                                  (do
+                                    (prn [::fail2])
+                                    (critical+ world fun+ i (inc rc)))
+                                  (-> (js/Promise.resolve (fun+))
+                                      (.then (fn []
+                                               (js/Promise.all [(write+ world [:c i] true)
+                                                                (write+ world [:b i] true)]))))))))))))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
