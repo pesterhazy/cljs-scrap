@@ -150,8 +150,7 @@
                        (resolve)
                        (js/setTimeout (fn [] (step))))))
             (.catch (fn [e]
-                      (reject e)))))
-      0))))
+                      (reject e)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test code
