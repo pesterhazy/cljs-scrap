@@ -76,7 +76,7 @@
                       (reject e)))))
       0))))
 
-(defn advance+ [clock]
+(defn make-ticker [clock]
   (let [!continue (atom true)
         break-fn (fn [] (reset! !continue false))]
     [(js/Promise. (fn [resolve]
@@ -94,12 +94,11 @@
     (prn [::installed])
     (-> (js/Promise.resolve)
         (.then (fn []
-                 (let [[p break-fn] (advance+ clock)]
+                 (let [[p break-fn] (make-ticker clock)]
                    (js/Promise.all [(-> (fun+) (.then break-fn)) p]))))
         (.finally (fn []
                     (prn [::uninstalling])
-                    (.uninstall clock)
-                    (prn [::ok]))))))
+                    (.uninstall clock))))))
 
 (defn time+ [fun+]
   (let [start (js/performance.now)]
@@ -113,12 +112,12 @@
       (.then (fn []
                (when @!critical
                  (throw (js/Error. "Another process is already in critical section")))
-               (prn [::enter id])
+               #_(prn [::enter id])
                (reset! !critical true)))
       (.then (fn []
                (delay+ (rand-int 10))))
       (.then (fn []
-               (prn [::leave id])
+               #_(prn [::leave id])
                (swap! !counter inc)
                (reset! !critical false)))))
 
