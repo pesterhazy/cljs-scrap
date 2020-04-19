@@ -5,6 +5,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; promise helpers
 
+(defn pnow []
+  (if (exists? js/performance)
+    (js/performance.now)
+    (.now (.-performance (js/require "perf_hooks")))))
+
 (defn delay+ [wait-ms]
   (js/Promise. (fn [resolve]
                  (js/setTimeout resolve wait-ms))))
@@ -34,11 +39,11 @@
                     (.uninstall clock))))))
 
 (defn time+ [fun+]
-  (let [start (js/performance.now)]
+  (let [start (pnow)]
     (-> (js/Promise.resolve)
         (.then fun+)
         (.finally (fn []
-                    (prn [::elapsed (- (js/performance.now) start)]))))))
+                    (prn [::elapsed (- (pnow) start)]))))))
 
 (defn promise-test [^js/Promise p]
   (reify
