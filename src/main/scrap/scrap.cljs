@@ -129,9 +129,9 @@
 
 (defn ^:export main []
   (println "*** start")
-  (let [n 10
+  (let [n 5
         world (make-world n)
-        times 10]
+        times 5]
     (-> (js/Promise.resolve)
         (.then (fn []
                  (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times)))))))
