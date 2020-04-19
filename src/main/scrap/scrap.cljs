@@ -2,7 +2,6 @@
   (:require ["@sinonjs/fake-timers" :as fake-timers]
             [clojure.test :as t]))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; promise helpers
 
@@ -53,27 +52,36 @@
           (.finally done)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; store
+
+(defprotocol Store
+  (write+ [_ path v])
+  (read+ [_ path]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; simulation
 
-(defn make-world [n]
+(defrecord SimulationStore
+    [n !critical !counter !state]
+  Store
+  (write+ [_ path v]
+    (-> (js/Promise.resolve)
+        (.then (fn []
+                 (swap! !state assoc-in path v)))))
+  (read+ [_ path]
+    (-> (js/Promise.resolve)
+        (.then (fn []
+                 (get-in @!state path))))))
+
+(defn make-simulation-store [n]
   (let [state {:k 0
                :b (vec (repeat n true))
                :c (vec (repeat n true))}]
-    {:n n
-     :!critical (atom nil)
-     :!counter (atom 0)
-     :!state (atom state)}))
-
-(defn write+ [{:keys [!state]} path v]
-  (-> (js/Promise.resolve)
-      ;; TODO: delay?
-      (.then (fn []
-               (swap! !state assoc-in path v)))))
-
-(defn read+ [{:keys [!state]} path]
-  (-> (js/Promise.resolve)
-      (.then (fn []
-               (get-in @!state path)))))
+    (map->SimulationStore
+     {:n n
+      :!critical (atom nil)
+      :!counter (atom 0)
+      :!state (atom state)})))
 
 (defn process+ [{:keys [!critical !counter]} id]
   (-> (js/Promise.resolve)
@@ -89,9 +97,9 @@
                (swap! !counter inc)
                (reset! !critical false)))))
 
-(defn simulation+ [world n n-processes mutex+]
+(defn simulation+ [store n n-processes mutex+]
   (->> (range n)
-       (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (mutex+ world #(process+ world i) i)))) (js/Promise.resolve))
+       (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (mutex+ store #(process+ store i) i n)))) (js/Promise.resolve))
                          n-processes)))
        js/Promise.all))
 
@@ -101,32 +109,32 @@
 (defn dijkstra+
   "Implementation of the algorithm described in E.W. Dijkstra, \"Solution
   of a problem in concurrent programming control\" (1965)"
-  [{:keys [n] :as world} fun+ i]
+  [store fun+ i n]
   (js/Promise.
    (fn [resolve reject]
      ((fn step []
         (-> (js/Promise.resolve)
             (.then (fn []
-                     (write+ world [:b i] false)))
+                     (write+ store [:b i] false)))
             (.then (fn []
-                     (read+ world [:k])))
+                     (read+ store [:k])))
             (.then (fn [k]
                      (if (not= k i)
-                       (-> (write+ world [:c i] true)
+                       (-> (write+ store [:c i] true)
                            (.then (fn []
-                                    (read+ world [:b k])))
+                                    (read+ store [:b k])))
                            (.then (fn [b-k]
                                     (-> (js/Promise.resolve
-                                         (when b-k (write+ world [:k] i)))
+                                         (when b-k (write+ store [:k] i)))
                                         (.then (fn []
                                                  false))))))
-                       (-> (write+ world [:c i] false)
+                       (-> (write+ store [:c i] false)
                            (.then (fn []
                                     (-> (->> (range n)
                                              (map (fn [j]
                                                     (if (= j i)
                                                       true
-                                                      (read+ world [:c j]))))
+                                                      (read+ store [:c j]))))
                                              (js/Promise.all))
                                         (.then (fn [bools]
                                                  (every? identity bools))))))
@@ -135,7 +143,7 @@
                                       false
                                       (-> (js/Promise.resolve (fun+))
                                           (.then (fn []
-                                                   (js/Promise.all [(write+ world [:c i] true) (write+ world [:b i] true)])))
+                                                   (js/Promise.all [(write+ store [:c i] true) (write+ store [:b i] true)])))
                                           (.then (fn [] true))))))))))
             (.then (fn [done?]
                      (if done?
@@ -150,13 +158,13 @@
 
 (t/deftest multiple
   (let [n 5
-        world (make-world n)
+        store (make-simulation-store n)
         times 5]
     (-> (js/Promise.resolve)
         (.then (fn []
-                 (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times dijkstra+)))))))
+                 (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ store n times dijkstra+)))))))
         (.then (fn []
-                 (t/is (= (* n times) (-> world :!counter deref)))))
+                 (t/is (= (* n times) (-> store :!counter deref)))))
         promise-test)))
 
 (defn ^:export main []
