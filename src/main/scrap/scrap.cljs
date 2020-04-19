@@ -1,7 +1,7 @@
 (ns scrap.scrap)
 
 (defn make-world [n]
-  (let [state {:k -1
+  (let [state {:k 0
                :b (vec (repeat n true))
                :c (vec (repeat n true))}]
     (prn state)
@@ -14,12 +14,14 @@
       ;; TODO: delay?
       (.then (fn []
                (swap! !state assoc-in path v)
+               (js/console.warn (pr-str path) v)
                (prn @!state)))))
 
 (defn read+ [{:keys [!state]} path]
   (-> (js/Promise.resolve)
       ;; TODO: delay?
       (.then (fn []
+               (prn 'read path '=> (get-in @!state path))
                (get-in @!state path)))))
 
 (defn critical+ [{:keys [n] :as world} fun+ i rc]
