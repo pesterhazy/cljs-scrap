@@ -71,7 +71,15 @@
                        (resolve)
                        (js/setTimeout (fn [] (step (inc rc))) 1))))
             (.catch (fn [e]
+
                       (reject e))))) 0))))
+(defn time+ [fun+]
+  (let [start (js/performance.now)]
+    (-> (js/Promise.resolve)
+        (.then fun+)
+        (.then (fn [v]
+                 (prn (- (js/performance.now) start))
+                 v)))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
@@ -88,13 +96,16 @@
                (prn [::leave id])
                (reset! !critical false)))))
 
+(defn simulation+ [world n n-processes]
+  (-> (->> (range n)
+           (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
+                             n-processes)))
+           js/Promise.all)
+      (.then (fn []
+               (prn [::done])))))
+
 (defn ^:export main []
   (println "*** start")
-  (let [n 10
-        world (make-world n)]
-    (-> (->> (range n)
-             (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
-                               10)))
-             js/Promise.all)
-        (.then (fn []
-                 (prn [::done]))))))
+  (-> (js/Promise.resolve)
+      (.then (fn []
+               (time+ #(simulation+ (make-world 10) 10 10))))))
