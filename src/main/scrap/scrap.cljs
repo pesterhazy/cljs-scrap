@@ -1,4 +1,5 @@
-(ns scrap.scrap)
+(ns scrap.scrap
+  (:require ["@sinonjs/fake-timers" :as fake-timers]))
 
 (defn make-world [n]
   (let [state {:k 0
@@ -71,15 +72,26 @@
                        (resolve)
                        (js/setTimeout (fn [] (step (inc rc))) 1))))
             (.catch (fn [e]
+                      (reject e)))))
+      0))))
 
-                      (reject e))))) 0))))
+(defn with-fake-clock+ [fun+]
+  (let [clock (fake-timers/install #js{:shouldAdvanceTime true
+                                       :advanceTimeDelta 5})]
+    (prn [::installed])
+    (-> (js/Promise.resolve)
+        (.then fun+)
+        (.finally (fn []
+                    (prn [::uninstalling])
+                    (.uninstall clock)
+                    (prn [::ok]))))))
+
 (defn time+ [fun+]
   (let [start (js/performance.now)]
     (-> (js/Promise.resolve)
         (.then fun+)
-        (.then (fn [v]
-                 (prn (- (js/performance.now) start))
-                 v)))))
+        (.finally (fn []
+                    (prn [::elapsed (- (js/performance.now) start)]))))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
@@ -89,23 +101,21 @@
                (prn [::enter id])
                (reset! !critical true)))
       (.then (fn []
-               (js/Promise. (fn [resolve]
-                              (let [wait-ms (rand-int 10)]
-                                (js/setTimeout resolve wait-ms))))))
+               (delay+ (rand-int 10))))
       (.then (fn []
                (prn [::leave id])
                (reset! !critical false)))))
 
 (defn simulation+ [world n n-processes]
-  (-> (->> (range n)
-           (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
-                             n-processes)))
-           js/Promise.all)
-      (.then (fn []
-               (prn [::done])))))
+  (->> (range n)
+       (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
+                         n-processes)))
+       js/Promise.all))
 
 (defn ^:export main []
   (println "*** start")
   (-> (js/Promise.resolve)
       (.then (fn []
-               (time+ #(simulation+ (make-world 10) 10 10))))))
+               (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ (make-world 10) 10 10)))))))
+      (.then (fn []
+               (println "*** end")))))
