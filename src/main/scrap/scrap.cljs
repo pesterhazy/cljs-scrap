@@ -28,46 +28,50 @@
 (def max-recursion 100)
 
 (defn critical+ [{:keys [n] :as world} fun+ i rc]
-  ;; FIXME: infinite promise chain
-  (-> (js/Promise.resolve)
-      (.then (fn []
-               (when (> rc max-recursion)
-                 (throw (js/Error. (str "Recurse count > " max-recursion))))))
-      (.then (fn []
-               (write+ world [:b i] false)))
-      (.then (fn []
-               (read+ world [:k])))
-      (.then (fn [k]
-               (if (not= k i)
-                 (-> (write+ world [:c i] true)
-                     (.then (fn []
-                              (read+ world [:b k])))
-                     (.then (fn [b-k]
-                              (-> (js/Promise.resolve
-                                   (when b-k (write+ world [:k] i)))
-                                  (.then (fn []
-                                           (delay+ 1)))
-                                  (.then (fn []
-                                           (critical+ world fun+ i (inc rc))))))))
-                 (-> (write+ world [:c i] false)
-                     (.then (fn []
-                              (-> (->> (range n)
-                                       (map (fn [j]
-                                              (if (= j i)
-                                                true
-                                                (read+ world [:c j]))))
-                                       (js/Promise.all))
-                                  (.then (fn [bools]
-                                           (every? identity bools))))))
-                     (.then (fn [ok?]
-                              (if-not ok?
-                                (-> (delay+ 1)
-                                    (.then (fn []
-                                             (critical+ world fun+ i (inc rc)))))
-                                (-> (js/Promise.resolve (fun+))
-                                    (.then (fn []
-                                             (js/Promise.all [(write+ world [:c i] true)
-                                                              (write+ world [:b i] true)])))))))))))))
+  (js/Promise.
+   (fn [resolve reject]
+     ((fn step []
+        (-> (js/Promise.resolve)
+            (.then (fn []
+                     (when (> rc max-recursion)
+                       (throw (js/Error. (str "Recurse count > " max-recursion))))))
+            (.then (fn []
+                     (write+ world [:b i] false)))
+            (.then (fn []
+                     (read+ world [:k])))
+            (.then (fn [k]
+                     (if (not= k i)
+                       (-> (write+ world [:c i] true)
+                           (.then (fn []
+                                    (read+ world [:b k])))
+                           (.then (fn [b-k]
+                                    (-> (js/Promise.resolve
+                                         (when b-k (write+ world [:k] i)))
+                                        (.then (fn []
+                                                 false))))))
+                       (-> (write+ world [:c i] false)
+                           (.then (fn []
+                                    (-> (->> (range n)
+                                             (map (fn [j]
+                                                    (if (= j i)
+                                                      true
+                                                      (read+ world [:c j]))))
+                                             (js/Promise.all))
+                                        (.then (fn [bools]
+                                                 (every? identity bools))))))
+                           (.then (fn [ok?]
+                                    (if-not ok?
+                                      false
+                                      (-> (js/Promise.resolve (fun+))
+                                          (.then (fn []
+                                                   (js/Promise.all [(write+ world [:c i] true) (write+ world [:b i] true)])))
+                                          (.then (fn [] true))))))))))
+            (.then (fn [done?]
+                     (if done?
+                       (resolve)
+                       (js/setTimeout step 1))))
+            (.catch (fn [e]
+                      (reject e)))))))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
