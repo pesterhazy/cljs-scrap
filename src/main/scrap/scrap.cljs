@@ -25,12 +25,12 @@
   (js/Promise. (fn [resolve]
                  (js/setTimeout resolve wait-ms))))
 
-(def max-recursion 100)
+(def max-recursion 1000)
 
-(defn critical+ [{:keys [n] :as world} fun+ i rc]
+(defn critical+ [{:keys [n] :as world} fun+ i]
   (js/Promise.
    (fn [resolve reject]
-     ((fn step []
+     ((fn step [rc]
         (-> (js/Promise.resolve)
             (.then (fn []
                      (when (> rc max-recursion)
@@ -69,9 +69,9 @@
             (.then (fn [done?]
                      (if done?
                        (resolve)
-                       (js/setTimeout step 1))))
+                       (js/setTimeout (fn [] (step (inc rc))) 1))))
             (.catch (fn [e]
-                      (reject e)))))))))
+                      (reject e))))) 0))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
@@ -82,8 +82,7 @@
                (reset! !critical true)))
       (.then (fn []
                (js/Promise. (fn [resolve]
-                              (let [wait-ms (rand-int 20)]
-                                (prn [::wait wait-ms])
+                              (let [wait-ms (rand-int 10)]
                                 (js/setTimeout resolve wait-ms))))))
       (.then (fn []
                (prn [::leave id])
@@ -94,7 +93,8 @@
   (let [n 10
         world (make-world n)]
     (-> (->> (range n)
-             (map (fn [i] (critical+ world #(process+ world i) i 0)))
+             (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
+                               10)))
              js/Promise.all)
         (.then (fn []
                  (prn [::done]))))))
