@@ -14,14 +14,14 @@
       ;; TODO: delay?
       (.then (fn []
                (swap! !state assoc-in path v)
-               (js/console.warn (pr-str path) v)
+               #_(js/console.warn (pr-str path) v)
                (prn @!state)))))
 
 (defn read+ [{:keys [!state]} path]
   (-> (js/Promise.resolve)
       ;; TODO: delay?
       (.then (fn []
-               (prn 'read path '=> (get-in @!state path))
+               #_(prn 'read path '=> (get-in @!state path))
                (get-in @!state path)))))
 
 (defn critical+ [{:keys [n] :as world} fun+ i rc]
@@ -42,31 +42,24 @@
                               (-> (js/Promise.resolve
                                    (when b-k (write+ world [:k] i)))
                                   (.then (fn []
-                                           (prn [::fail1])
                                            (critical+ world fun+ i (inc rc))))))))
-                 (do
-                   (prn :aha)
-                   (-> (write+ world [:c i] false)
-                       (.then (fn []
-                                (->> (range n)
-                                     (reduce
-                                      (fn [p j]
-                                        (-> p
-                                            (.then
-                                             (fn [break?]
-                                               (read+ world [:c j])
-                                               (.then (fn [c-j]
-                                                        (and break? (not= j i) (not c-j))))))))
-                                      (js/Promise.resolve false)))))
-                       (.then (fn [break?]
-                                (if break?
-                                  (do
-                                    (prn [::fail2])
-                                    (critical+ world fun+ i (inc rc)))
-                                  (-> (js/Promise.resolve (fun+))
-                                      (.then (fn []
-                                               (js/Promise.all [(write+ world [:c i] true)
-                                                                (write+ world [:b i] true)]))))))))))))))
+                 (-> (write+ world [:c i] false)
+                     (.then (fn []
+                              (-> (->> (range n)
+                                       (map (fn [j]
+                                              (if (= j i)
+                                                true
+                                                (read+ world [:c j]))))
+                                       (js/Promise.all))
+                                  (.then (fn [bools]
+                                           (every? identity bools))))))
+                     (.then (fn [ok?]
+                              (if-not ok?
+                                (critical+ world fun+ i (inc rc))
+                                (-> (js/Promise.resolve (fun+))
+                                    (.then (fn []
+                                             (js/Promise.all [(write+ world [:c i] true)
+                                                              (write+ world [:b i] true)])))))))))))))
 
 (defn process+ [{:keys [!critical]} id]
   (-> (js/Promise.resolve)
