@@ -25,6 +25,10 @@
                (reset! !critical false)))))
 
 (defn ^:export main []
-  (-> (banana+ (make-world) 0)
-      (.then (fn []
-               (prn [::done])))))
+  (let [n 2
+        world (make-world)]
+    (-> (->> (range n)
+             (map (fn [i] (banana+ world i)))
+             js/Promise.all)
+        (.then (fn []
+                 (prn [::done]))))))
