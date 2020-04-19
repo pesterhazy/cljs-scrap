@@ -9,6 +9,7 @@
 
  :builds
  {:node {:target :node-script
+         :devtools {:after-load scrap.scrap/main}
          :main scrap.scrap/main
          :output-to "node-out/out.js"}
   :browser {:target :browser
