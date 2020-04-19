@@ -13,9 +13,7 @@
   (-> (js/Promise.resolve)
       ;; TODO: delay?
       (.then (fn []
-               (swap! !state assoc-in path v)
-               #_(js/console.warn (pr-str path) v)
-               (prn @!state)))))
+               (swap! !state assoc-in path v)))))
 
 (defn read+ [{:keys [!state]} path]
   (-> (js/Promise.resolve)
