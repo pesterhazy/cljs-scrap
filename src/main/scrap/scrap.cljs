@@ -7,6 +7,7 @@
                :c (vec (repeat n true))}]
     {:n n
      :!critical (atom nil)
+     :!counter (atom 0)
      :!state (atom state)}))
 
 (defn write+ [{:keys [!state]} path v]
@@ -104,7 +105,7 @@
         (.finally (fn []
                     (prn [::elapsed (- (js/performance.now) start)]))))))
 
-(defn process+ [{:keys [!critical]} id]
+(defn process+ [{:keys [!critical !counter]} id]
   (-> (js/Promise.resolve)
       (.then (fn []
                (when @!critical
@@ -115,6 +116,7 @@
                (delay+ (rand-int 10))))
       (.then (fn []
                (prn [::leave id])
+               (swap! !counter inc)
                (reset! !critical false)))))
 
 (defn simulation+ [world n n-processes]
@@ -125,8 +127,12 @@
 
 (defn ^:export main []
   (println "*** start")
-  (-> (js/Promise.resolve)
-      (.then (fn []
-               (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ (make-world 10) 10 10)))))))
-      (.then (fn []
-               (println "*** end")))))
+  (let [n 10
+        world (make-world n)
+        times 10]
+    (-> (js/Promise.resolve)
+        (.then (fn []
+                 (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times)))))))
+        (.then (fn []
+                 (assert (= (* n times) (-> world :!counter deref)) (str "Unexpected: " (-> world :!counter deref)))
+                 (println "*** end"))))))
