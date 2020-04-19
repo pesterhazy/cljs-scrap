@@ -24,13 +24,13 @@
 
 (defn with-fake-clock+ [fun+]
   (let [clock (fake-timers/install)]
-    (prn [::installed])
+    #_(prn [::installed])
     (-> (js/Promise.resolve)
         (.then (fn []
                  (let [[p break-fn] (make-ticker clock)]
                    (js/Promise.all [(-> (fun+) (.then break-fn)) p]))))
         (.finally (fn []
-                    (prn [::uninstalling])
+                    #_(prn [::uninstalling])
                     (.uninstall clock))))))
 
 (defn time+ [fun+]
