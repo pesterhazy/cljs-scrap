@@ -1,5 +1,6 @@
 (ns scrap.scrap
-  (:require ["@sinonjs/fake-timers" :as fake-timers]))
+  (:require ["@sinonjs/fake-timers" :as fake-timers]
+            [clojure.test :as t]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -39,6 +40,17 @@
         (.then fun+)
         (.finally (fn []
                     (prn [::elapsed (- (js/performance.now) start)]))))))
+
+(defn promise-test [^js/Promise p]
+  (reify
+    clojure.test/IAsyncTest
+    clojure.core/IFn
+    (-invoke [_ done]
+      (-> p
+          (.catch (fn [e]
+                    (js/console.error e)
+                    (t/is false (str "Promise rejected: " (.-message e)))))
+          (.finally done)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; simulation
@@ -136,9 +148,9 @@
       0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; test code
 
-(defn ^:export main []
-  (println "*** start")
+(t/deftest multiple
   (let [n 5
         world (make-world n)
         times 5]
@@ -146,5 +158,8 @@
         (.then (fn []
                  (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times dijkstra+)))))))
         (.then (fn []
-                 (assert (= (* n times) (-> world :!counter deref)) (str "Unexpected: " (-> world :!counter deref)))
-                 (println "*** end"))))))
+                 (t/is (= (* n times) (-> world :!counter deref)))))
+        promise-test)))
+
+(defn ^:export main []
+  (t/run-tests))
