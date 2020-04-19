@@ -98,16 +98,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main code
 
-(def max-recursion 1000)
-
 (defn dijkstra+ [{:keys [n] :as world} fun+ i]
   (js/Promise.
    (fn [resolve reject]
-     ((fn step [rc]
+     ((fn step []
         (-> (js/Promise.resolve)
-            (.then (fn []
-                     (when (> rc max-recursion)
-                       (throw (js/Error. (str "Recurse count > " max-recursion))))))
             (.then (fn []
                      (write+ world [:b i] false)))
             (.then (fn []
@@ -142,7 +137,7 @@
             (.then (fn [done?]
                      (if done?
                        (resolve)
-                       (js/setTimeout (fn [] (step (inc rc))) 1))))
+                       (js/setTimeout (fn [] (step))))))
             (.catch (fn [e]
                       (reject e)))))
       0))))
