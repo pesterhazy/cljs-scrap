@@ -77,12 +77,18 @@
                (swap! !counter inc)
                (reset! !critical false)))))
 
+(defn simulation+ [world n n-processes mutex+]
+  (->> (range n)
+       (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (mutex+ world #(process+ world i) i)))) (js/Promise.resolve))
+                         n-processes)))
+       js/Promise.all))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main code
 
 (def max-recursion 1000)
 
-(defn critical+ [{:keys [n] :as world} fun+ i]
+(defn dijkstra+ [{:keys [n] :as world} fun+ i]
   (js/Promise.
    (fn [resolve reject]
      ((fn step [rc]
@@ -131,12 +137,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn simulation+ [world n n-processes]
-  (->> (range n)
-       (map (fn [i] (nth (iterate (fn [p] (.then p (fn [] (critical+ world #(process+ world i) i)))) (js/Promise.resolve))
-                         n-processes)))
-       js/Promise.all))
-
 (defn ^:export main []
   (println "*** start")
   (let [n 5
@@ -144,7 +144,7 @@
         times 5]
     (-> (js/Promise.resolve)
         (.then (fn []
-                 (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times)))))))
+                 (time+ (fn [] (with-fake-clock+ (fn [] (simulation+ world n times dijkstra+)))))))
         (.then (fn []
                  (assert (= (* n times) (-> world :!counter deref)) (str "Unexpected: " (-> world :!counter deref)))
                  (println "*** end"))))))
