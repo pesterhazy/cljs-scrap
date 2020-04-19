@@ -1,6 +1,48 @@
 (ns scrap.scrap
   (:require ["@sinonjs/fake-timers" :as fake-timers]))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; promise helpers
+
+(defn delay+ [wait-ms]
+  (js/Promise. (fn [resolve]
+                 (js/setTimeout resolve wait-ms))))
+
+(defn make-ticker [clock]
+  (let [!continue (atom true)
+        break-fn (fn [] (reset! !continue false))]
+    [(js/Promise. (fn [resolve]
+                    ((fn step [n]
+                       (if (and @!continue(< n 10000))
+                         (do
+                           (.tick clock 1)
+                           (.then (js/Promise.resolve) #(step (inc n))))
+                         (resolve)))
+                     0)))
+     break-fn]))
+
+(defn with-fake-clock+ [fun+]
+  (let [clock (fake-timers/install)]
+    (prn [::installed])
+    (-> (js/Promise.resolve)
+        (.then (fn []
+                 (let [[p break-fn] (make-ticker clock)]
+                   (js/Promise.all [(-> (fun+) (.then break-fn)) p]))))
+        (.finally (fn []
+                    (prn [::uninstalling])
+                    (.uninstall clock))))))
+
+(defn time+ [fun+]
+  (let [start (js/performance.now)]
+    (-> (js/Promise.resolve)
+        (.then fun+)
+        (.finally (fn []
+                    (prn [::elapsed (- (js/performance.now) start)]))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; simulation
+
 (defn make-world [n]
   (let [state {:k 0
                :b (vec (repeat n true))
@@ -18,14 +60,25 @@
 
 (defn read+ [{:keys [!state]} path]
   (-> (js/Promise.resolve)
-      ;; TODO: delay?
       (.then (fn []
-               #_(prn 'read path '=> (get-in @!state path))
                (get-in @!state path)))))
 
-(defn delay+ [wait-ms]
-  (js/Promise. (fn [resolve]
-                 (js/setTimeout resolve wait-ms))))
+(defn process+ [{:keys [!critical !counter]} id]
+  (-> (js/Promise.resolve)
+      (.then (fn []
+               (when @!critical
+                 (throw (js/Error. "Another process is already in critical section")))
+               #_(prn [::enter id])
+               (reset! !critical true)))
+      (.then (fn []
+               (delay+ (rand-int 10))))
+      (.then (fn []
+               #_(prn [::leave id])
+               (swap! !counter inc)
+               (reset! !critical false)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; main code
 
 (def max-recursion 1000)
 
@@ -76,50 +129,7 @@
                       (reject e)))))
       0))))
 
-(defn make-ticker [clock]
-  (let [!continue (atom true)
-        break-fn (fn [] (reset! !continue false))]
-    [(js/Promise. (fn [resolve]
-                    ((fn step [n]
-                       (if (and @!continue(< n 10000))
-                         (do
-                           (.tick clock 1)
-                           (.then (js/Promise.resolve) #(step (inc n))))
-                         (resolve)))
-                     0)))
-     break-fn]))
-
-(defn with-fake-clock+ [fun+]
-  (let [clock (fake-timers/install)]
-    (prn [::installed])
-    (-> (js/Promise.resolve)
-        (.then (fn []
-                 (let [[p break-fn] (make-ticker clock)]
-                   (js/Promise.all [(-> (fun+) (.then break-fn)) p]))))
-        (.finally (fn []
-                    (prn [::uninstalling])
-                    (.uninstall clock))))))
-
-(defn time+ [fun+]
-  (let [start (js/performance.now)]
-    (-> (js/Promise.resolve)
-        (.then fun+)
-        (.finally (fn []
-                    (prn [::elapsed (- (js/performance.now) start)]))))))
-
-(defn process+ [{:keys [!critical !counter]} id]
-  (-> (js/Promise.resolve)
-      (.then (fn []
-               (when @!critical
-                 (throw (js/Error. "Another process is already in critical section")))
-               #_(prn [::enter id])
-               (reset! !critical true)))
-      (.then (fn []
-               (delay+ (rand-int 10))))
-      (.then (fn []
-               #_(prn [::leave id])
-               (swap! !counter inc)
-               (reset! !critical false)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn simulation+ [world n n-processes]
   (->> (range n)
