@@ -4,7 +4,6 @@
   (let [state {:k 0
                :b (vec (repeat n true))
                :c (vec (repeat n true))}]
-    (prn state)
     {:n n
      :!critical (atom nil)
      :!state (atom state)}))
@@ -22,11 +21,18 @@
                #_(prn 'read path '=> (get-in @!state path))
                (get-in @!state path)))))
 
+(defn delay+ [wait-ms]
+  (js/Promise. (fn [resolve]
+                 (js/setTimeout resolve wait-ms))))
+
+(def max-recursion 100)
+
 (defn critical+ [{:keys [n] :as world} fun+ i rc]
+  ;; FIXME: infinite promise chain
   (-> (js/Promise.resolve)
       (.then (fn []
-               (when (> rc 10)
-                 (throw (js/Error. "Recurse count > 10")))))
+               (when (> rc max-recursion)
+                 (throw (js/Error. (str "Recurse count > " max-recursion))))))
       (.then (fn []
                (write+ world [:b i] false)))
       (.then (fn []
@@ -39,6 +45,8 @@
                      (.then (fn [b-k]
                               (-> (js/Promise.resolve
                                    (when b-k (write+ world [:k] i)))
+                                  (.then (fn []
+                                           (delay+ 1)))
                                   (.then (fn []
                                            (critical+ world fun+ i (inc rc))))))))
                  (-> (write+ world [:c i] false)
@@ -53,7 +61,9 @@
                                            (every? identity bools))))))
                      (.then (fn [ok?]
                               (if-not ok?
-                                (critical+ world fun+ i (inc rc))
+                                (-> (delay+ 1)
+                                    (.then (fn []
+                                             (critical+ world fun+ i (inc rc)))))
                                 (-> (js/Promise.resolve (fun+))
                                     (.then (fn []
                                              (js/Promise.all [(write+ world [:c i] true)
@@ -67,13 +77,16 @@
                (prn [::enter id])
                (reset! !critical true)))
       (.then (fn []
-               ;; wait?
-               ))
+               (js/Promise. (fn [resolve]
+                              (let [wait-ms (rand-int 20)]
+                                (prn [::wait wait-ms])
+                                (js/setTimeout resolve wait-ms))))))
       (.then (fn []
                (prn [::leave id])
                (reset! !critical false)))))
 
 (defn ^:export main []
+  (println "*** start")
   (let [n 2
         world (make-world n)]
     (-> (->> (range n)
