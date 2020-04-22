@@ -15,5 +15,6 @@
   :browser {:target :browser
             :output-dir "public/js"
             :asset-path "/js"
+            :build-hooks [(scrap.ppp/load-env)]
             :devtools {:after-load scrap.scrap/main}
             :modules {:main {:entries [scrap.scrap]}}}}}
