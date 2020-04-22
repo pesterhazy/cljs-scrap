@@ -4,14 +4,13 @@
 (defn load-env
   {:shadow.build/stage :compile-prepare}
   [arg & more]
-  (prn [::init])
+  ;; Do nothing. This hook is only used to make sure
+  ;; the namespace is loaded
   arg)
 
-(def result-sym (gensym "result"))
-
 (defn ppp [form]
-  (let [orig-form form]
+  (let [result-sym (gensym "result")]
     `(let [~result-sym ~form]
        (println
-        (str (pr-str '~orig-form) " => "
+        (str (pr-str '~form) " => "
              (pr-str ~result-sym))))))
