@@ -5,5 +5,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
-  (prn #ppp (+ 1 2))
+  (let [v #ppp (* 3 2)])
   #_(t/run-tests 'scrap.dijkstra))

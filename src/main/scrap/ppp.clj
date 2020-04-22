@@ -7,7 +7,6 @@
   (prn [::init])
   arg)
 
-
 (def result-sym (gensym "result"))
 
 (defn ppp [form]
