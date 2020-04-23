@@ -1,1 +1,3 @@
-{ppp scrap.ppp/ppp}
+{pr scrap.ppp/hashpr
+ pp scrap.ppp/hashpp
+ pc scrap.ppp/hashpc}
