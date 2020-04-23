@@ -7,5 +7,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
 
-  (let [v #pc (vec (range 10000 10050))])
+  (let [v #pr (vec (range 10000 10050))])
   #_(t/run-tests 'scrap.dijkstra))
