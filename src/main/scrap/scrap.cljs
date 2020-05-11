@@ -5,9 +5,16 @@
             [reagent.core :as r]
             [scrap.dijkstra]))
 
+
 (defonce !tick (r/atom 0))
 
-(defn <clock> []
+(defn <clock-1> []
+  (r/with-let [tick @!tick]
+    [:div
+     "clock:"
+     tick]))
+
+(defn <clock-2> []
   [:div
    "clock:"
    @!tick])
@@ -23,7 +30,8 @@
                                                    1000))
                     (js/clearInterval @!timer)))}
      [:h1 "Hello"]
-     [<clock>]]))
+     [<clock-1>]
+     [<clock-2>]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
