@@ -31,7 +31,9 @@
 (defn clock []
   (js/console.log "clock")
   (let [[timer update-time] (react/useState (js/Date.))]
-    (use-interval (fn [] (update-time (js/Date.))) 1000)
+    (use-interval (fn []
+                    (js/console.log "callback")
+                    #_(update-time (js/Date.))) 1000)
     #_(react/useEffect
        (fn []
          (js/console.log "setInterval")
@@ -39,13 +41,15 @@
            (fn []
              (js/console.log "clearInterval")
              (js/clearInterval i)))))
-    [:div (-> timer .toTimeString (str/split " ") first)]))
+    (r/as-element
+     [:div (-> timer .toTimeString (str/split " ") first)])))
 
 (defn <root>
   []
+  (js/console.log "root")
   [:div
    [:h1 "Hello3"]
-   [clock]])
+   [:> clock]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
