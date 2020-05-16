@@ -20,6 +20,7 @@
      (fn []
        (js/console.log "new delay" delay)
        (let [tick (fn []
+                    (js/console.log "tick")
                     (.current saved-callback))]
          (when delay
            (js/console.log "setInterval")
@@ -34,7 +35,8 @@
   (let [[now update-time] (react/useState (js/Date.))]
     (use-interval (fn []
                     (js/console.log "callback")
-                    #_(update-time (js/Date.))) 1000)
+                    (update-time (js/Date.)))
+                  1000)
     (react/createElement "div"
                          nil
                          (-> now .toTimeString (str/split " ") first))))
