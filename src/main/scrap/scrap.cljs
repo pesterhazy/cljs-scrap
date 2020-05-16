@@ -20,7 +20,7 @@
      (fn []
        (let [handler (fn [& args]
                        (.apply (.-current saved-callback) nil (into-array args)))]
-         (when delay
+         (when-not (identical? nil delay)
            (js/console.log "setInterval")
            (let [id (js/setInterval handler delay)]
              (fn [] (js/clearInterval id))))))
