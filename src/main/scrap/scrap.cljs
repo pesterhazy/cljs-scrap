@@ -14,7 +14,8 @@
   (let [saved-callback (useRef)]
     (useEffect
      (fn []
-       (set! (.-current saved-callback) callback))
+       (set! (.-current saved-callback) callback)
+       js/undefined)
      #js [callback])
     (useEffect
      (fn []
@@ -23,8 +24,11 @@
          (when-not (identical? nil delay)
            (js/console.log "setInterval")
            (let [id (js/setInterval handler delay)]
-             (fn [] (js/clearInterval id))))))
-     #js [delay])))
+             (fn []
+               (js/clearInterval id)))))
+       js/undefined)
+     #js [delay]))
+  js/undefined)
 
 (defn clock []
   (js/console.log "clock")
@@ -32,11 +36,11 @@
     ;; If you replace use-interval with my-use-interval, things break
     ;; - why?  There must be some subtle difference between
     ;; use-interval and my-use-interval but I can't see it.
-    (use-interval (fn []
-                    (let [new-cnt (js/Date.now)]
-                      (js/console.log "new-cnt" new-cnt)
-                      (set-cnt new-cnt)))
-                  1000)
+    (my-use-interval (fn []
+                       (let [new-cnt (js/Date.now)]
+                         (js/console.log "new-cnt" new-cnt)
+                         (set-cnt new-cnt)))
+                     1000)
     (react/createElement "div"
                          nil
                          cnt)))
