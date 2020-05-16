@@ -3,7 +3,7 @@
   (:require [clojure.test :as t]
             [clojure.pprint]
             [clojure.string :as str]
-            ["react" :as react]
+            ["react" :as react :refer [useRef useEffect]]
             ["react-dom" :as react-dom]
             ["@use-it/interval" :as use-interval]
             [scrap.dijkstra]))
@@ -11,24 +11,19 @@
 (js/console.log (.-version react))
 
 (defn my-use-interval [callback delay]
-  (let [saved-callback (react/useRef)]
-    (react/useEffect
+  (let [saved-callback (useRef)]
+    (useEffect
      (fn []
-       #_(js/console.log "new callback" callback)
        (set! (.-current saved-callback) callback))
      #js [callback])
-    (react/useEffect
+    (useEffect
      (fn []
-       #_(js/console.log "new delay" delay)
-       (let [tick (fn []
-                    (js/console.log "tick")
-                    (.current saved-callback))]
+       (let [handler (fn [& args]
+                       (.apply (.-current saved-callback) nil (into-array args)))]
          (when delay
            (js/console.log "setInterval")
-           (let [id (js/setInterval tick delay)]
-             (fn []
-               #_(js/console.log "clearInterval")
-               (js/clearInterval id))))))
+           (let [id (js/setInterval handler delay)]
+             (fn [] (js/clearInterval id))))))
      #js [delay])))
 
 (defn clock []
