@@ -10,18 +10,36 @@
 
 (js/console.log (.-version react))
 
-(defn clock []
-  (let [[timer update-time] (react/useState (js/Date.))
-        time-str (-> timer .toTimeString (str/split " ") first)]
+(defn use-interval [callback delay]
+  (let [saved-callback (react/useRef)]
     (react/useEffect
      (fn []
-       (js/console.log "setInterval")
-       (let [i (js/setInterval #(update-time (js/Date.)) 1000)]
-         (fn []
-           (js/console.log "clearInterval")
-           (js/clearInterval i)))))
-    [:div.example-clock
-     time-str]))
+       (set! (.-current saved-callback) callback))
+     #js [callback])
+    (react/useEffect
+     (fn []
+       (let [tick (fn []
+                    (.current saved-callback))]
+         (when delay
+           (js/console.log "setInterval")
+           (let [id (js/setInterval tick delay)]
+             (fn []
+               (js/console.log "clearInterval")
+               (js/clearInterval id))))))
+     #js [delay])))
+
+(defn clock []
+  (js/console.log "clock")
+  (let [[timer update-time] (react/useState (js/Date.))]
+    (use-interval (fn [] (update-time (js/Date.))) 1000)
+    #_(react/useEffect
+       (fn []
+         (js/console.log "setInterval")
+         (let [i (js/setInterval #(update-time (js/Date.)) 1000)]
+           (fn []
+             (js/console.log "clearInterval")
+             (js/clearInterval i)))))
+    [:div (-> timer .toTimeString (str/split " ") first)]))
 
 (defn <root>
   []
