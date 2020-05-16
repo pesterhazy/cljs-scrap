@@ -23,7 +23,7 @@
                     (js/console.log "tick")
                     (.current saved-callback))]
          (when delay
-           #_(js/console.log "setInterval")
+           (js/console.log "setInterval")
            (let [id (js/setInterval tick delay)]
              (fn []
                #_(js/console.log "clearInterval")
@@ -32,13 +32,15 @@
 
 (defn clock []
   (js/console.log "clock")
-  (let [[now update-time] (react/useState (js/Date.now))]
+  (let [[cnt set-cnt] (react/useState 0)]
     (use-interval (fn []
-                    (update-time (js/Date.now)))
+                    (let [new-cnt (inc cnt)]
+                      (js/console.log "new-cnt" new-cnt)
+                      (set-cnt new-cnt)))
                   1000)
     (react/createElement "div"
                          nil
-                         now)))
+                         cnt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
