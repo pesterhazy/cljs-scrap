@@ -21,9 +21,7 @@
                       (js/console.log "new-cnt" new-cnt)
                       (set-cnt new-cnt)))
                   1000)
-    (react/createElement "div"
-                         nil
-                         cnt)))
+    [:div cnt]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
