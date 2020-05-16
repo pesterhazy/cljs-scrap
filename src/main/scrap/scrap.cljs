@@ -34,6 +34,9 @@
 (defn clock []
   (js/console.log "clock")
   (let [[cnt set-cnt] (react/useState (js/Date.now))]
+    ;; If you replace use-interval with my-use-interval, things break
+    ;; - why?  There must be some subtle difference between
+    ;; use-interval and my-use-interval but I can't see it.
     (use-interval (fn []
                     (let [new-cnt (js/Date.now)]
                       (js/console.log "new-cnt" new-cnt)
