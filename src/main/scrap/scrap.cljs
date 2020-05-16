@@ -5,12 +5,11 @@
             [clojure.string :as str]
             ["react" :as react :refer [useRef useEffect]]
             ["react-dom" :as react-dom]
-            ["@use-it/interval" :as use-interval]
             [scrap.dijkstra]))
 
 (js/console.log (.-version react))
 
-(defn my-use-interval [callback delay]
+(defn use-interval [callback delay]
   (let [saved-callback (useRef)]
     (useEffect
      (fn []
@@ -20,15 +19,15 @@
     (useEffect
      (fn []
        (let [handler (fn [& args]
-                       (.apply (.-current saved-callback) nil (into-array args)))]
-         (when-not (identical? nil delay)
-           (js/console.log "setInterval")
+                       (.apply (.-current saved-callback)
+                               nil
+                               (into-array args)))]
+         (if (identical? nil delay)
+           js/undefined
            (let [id (js/setInterval handler delay)]
              (fn []
-               (js/clearInterval id)))))
-       js/undefined)
-     #js [delay]))
-  js/undefined)
+               (js/clearInterval id))))))
+     #js [delay])))
 
 (defn clock []
   (js/console.log "clock")
@@ -36,11 +35,11 @@
     ;; If you replace use-interval with my-use-interval, things break
     ;; - why?  There must be some subtle difference between
     ;; use-interval and my-use-interval but I can't see it.
-    (my-use-interval (fn []
-                       (let [new-cnt (js/Date.now)]
-                         (js/console.log "new-cnt" new-cnt)
-                         (set-cnt new-cnt)))
-                     1000)
+    (use-interval (fn []
+                    (let [new-cnt (js/Date.now)]
+                      (js/console.log "new-cnt" new-cnt)
+                      (set-cnt new-cnt)))
+                  1000)
     (react/createElement "div"
                          nil
                          cnt)))
