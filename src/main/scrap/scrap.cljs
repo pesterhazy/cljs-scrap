@@ -5,29 +5,10 @@
             [clojure.string :as str]
             ["react" :as react :refer [useRef useEffect]]
             ["react-dom" :as react-dom]
+            [reagent.core :as r]
+            [reagent.dom :as rdom]
+            ["@use-it/interval" :as use-interval]
             [scrap.dijkstra]))
-
-(js/console.log (.-version react))
-
-(defn use-interval [callback delay]
-  (let [saved-callback (useRef)]
-    (useEffect
-     (fn []
-       (set! (.-current saved-callback) callback)
-       js/undefined)
-     #js [callback])
-    (useEffect
-     (fn []
-       (let [handler (fn [& args]
-                       (.apply (.-current saved-callback)
-                               nil
-                               (into-array args)))]
-         (if (identical? nil delay)
-           js/undefined
-           (let [id (js/setInterval handler delay)]
-             (fn []
-               (js/clearInterval id))))))
-     #js [delay])))
 
 (defn clock []
   (js/console.log "clock")
@@ -47,5 +28,4 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ^:export main []
-  (react-dom/render (react/createElement clock nil nil)
-                    (js/document.getElementById "app")))
+  (rdom/render [:f> clock] (js/document.getElementById "app")))
