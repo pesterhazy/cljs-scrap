@@ -19,4 +19,4 @@
 (def functional-compiler (r/create-compiler {:function-components true}))
 
 (defn ^:export main []
-  (rdom/render [:f> <root>] (js/document.getElementById "app")))
+  (rdom/render <root> (js/document.getElementById "app") functional-compiler))
