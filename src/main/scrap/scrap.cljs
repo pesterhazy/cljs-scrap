@@ -10,22 +10,23 @@
 
 (js/console.log (.-version react))
 
-(defn clock [time-color]
+(defn clock []
   (let [[timer update-time] (react/useState (js/Date.))
         time-str (-> timer .toTimeString (str/split " ") first)]
     (react/useEffect
      (fn []
+       (js/console.log "setInterval")
        (let [i (js/setInterval #(update-time (js/Date.)) 1000)]
          (fn []
+           (js/console.log "clearInterval")
            (js/clearInterval i)))))
     [:div.example-clock
-     {:style {:color time-color}}
      time-str]))
 
 (defn <root>
   []
   [:div
-   [:h1 "Hello2"]
+   [:h1 "Hello3"]
    [clock]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
