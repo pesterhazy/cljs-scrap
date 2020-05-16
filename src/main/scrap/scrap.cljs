@@ -5,12 +5,12 @@
             [clojure.string :as str]
             ["react" :as react]
             ["react-dom" :as react-dom]
-            ["@use-it/interval" :as interval]
+            ["@use-it/interval" :as use-interval]
             [scrap.dijkstra]))
 
 (js/console.log (.-version react))
 
-(defn use-interval [callback delay]
+(defn my-use-interval [callback delay]
   (let [saved-callback (react/useRef)]
     (react/useEffect
      (fn []
@@ -34,11 +34,11 @@
 (defn clock []
   (js/console.log "clock")
   (let [[cnt set-cnt] (react/useState (js/Date.now))]
-    (interval (fn []
-                (let [new-cnt (js/Date.now)]
-                  (js/console.log "new-cnt" new-cnt)
-                  (set-cnt new-cnt)))
-              1000)
+    (use-interval (fn []
+                    (let [new-cnt (js/Date.now)]
+                      (js/console.log "new-cnt" new-cnt)
+                      (set-cnt new-cnt)))
+                  1000)
     (react/createElement "div"
                          nil
                          cnt)))
