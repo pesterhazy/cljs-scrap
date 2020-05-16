@@ -13,33 +13,32 @@
   (let [saved-callback (react/useRef)]
     (react/useEffect
      (fn []
-       (js/console.log "new callback" callback)
+       #_(js/console.log "new callback" callback)
        (set! (.-current saved-callback) callback))
      #js [callback])
     (react/useEffect
      (fn []
-       (js/console.log "new delay" delay)
+       #_(js/console.log "new delay" delay)
        (let [tick (fn []
                     (js/console.log "tick")
                     (.current saved-callback))]
          (when delay
-           (js/console.log "setInterval")
+           #_(js/console.log "setInterval")
            (let [id (js/setInterval tick delay)]
              (fn []
-               (js/console.log "clearInterval")
+               #_(js/console.log "clearInterval")
                (js/clearInterval id))))))
      #js [delay])))
 
 (defn clock []
   (js/console.log "clock")
-  (let [[now update-time] (react/useState (js/Date.))]
+  (let [[now update-time] (react/useState (js/Date.now))]
     (use-interval (fn []
-                    (js/console.log "callback")
-                    (update-time (js/Date.)))
+                    (update-time (js/Date.now)))
                   1000)
     (react/createElement "div"
                          nil
-                         (-> now .toTimeString (str/split " ") first))))
+                         now)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
