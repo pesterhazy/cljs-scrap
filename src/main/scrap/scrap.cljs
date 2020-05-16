@@ -2,17 +2,31 @@
   (:require-macros [scrap.ppp])
   (:require [clojure.test :as t]
             [clojure.pprint]
+            [clojure.string :as str]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            ["react" :as React]
+            ["react" :as react]
             [scrap.dijkstra]))
 
-(js/console.log (.-version React))
+(js/console.log (.-version react))
+
+(defn clock [time-color]
+  (let [[timer update-time] (react/useState (js/Date.))
+        time-str (-> timer .toTimeString (str/split " ") first)]
+    (react/useEffect
+     (fn []
+       (let [i (js/setInterval #(update-time (js/Date.)) 1000)]
+         (fn []
+           (js/clearInterval i)))))
+    [:div.example-clock
+     {:style {:color time-color}}
+     time-str]))
 
 (defn <root>
   []
   [:div
-   [:h1 "Hello2"]])
+   [:h1 "Hello2"]
+   [clock]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
