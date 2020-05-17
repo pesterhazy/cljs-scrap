@@ -2,39 +2,66 @@
   (:require-macros [scrap.ppp])
   (:require [clojure.test :as t]
             [clojure.pprint]
+            [clojure.string :as str]
+            ["react" :as react :refer [useRef useEffect]]
+            ["react-dom" :as react-dom]
+            ["recoil" :as recoil]
             [reagent.core :as r]
+            [reagent.dom :as rdom]
+            ["@use-it/interval" :as use-interval]
             [scrap.dijkstra]))
 
+(defonce !text (recoil/atom
+                #js{:key (str ::text)
+                    :default "x"}))
 
-(defonce !tick (r/atom 0))
+(defonce !upper (recoil/selector
+                 #js{:key (str ::upper)
+                     :get (fn [ctx]
+                            (str/upper-case (.get ctx !text)))}))
 
-(defn <clock-1> []
-  (r/with-let [tick @!tick]
+(defonce !person (recoil/selector
+                  #js{:keys (str ::person)
+                      :get (fn [ctx]
+                             (-> (js/Promise. (fn [resolve]
+                                                (js/setTimeout resolve 2000)))
+                                 (.then (fn [] (js/fetch "https://yesno.wtf/api")))
+                                 (.then (fn [result] (.json result)))
+                                 (.then (fn [result]
+                                          #pp result))))}))
+
+(defn <text> []
+  (let [text (recoil/useRecoilValue !text)]
+    [:div "Text: " (pr-str text)]))
+
+(defn <person> []
+  (js/console.log "<person>")
+  (let [loadable (recoil/useRecoilValueLoadable !person)]
+    (case (.-state #pp loadable)
+      "loading"
+      [:div "loading..."]
+      "hasValue"
+      [:div "Person: " (pr-str (.-contents loadable))])))
+
+#_(defn <wrap> []
+    [:> react/Suspense {:fallback (r/as-element [:div "..."])}
+     [:f> <person>]])
+
+(defn <main> []
+  (let [set-text (recoil/useSetRecoilState !text)]
     [:div
-     "clock:"
-     tick]))
+     [:h1 "welcome"]
+     [:f> <person>]
+     [:f> <text>]
+     [:button {:style {:margin-top 10}
+               :on-click (fn [] (set-text (fn [s] (str s "x"))))}
+      "more"]]))
 
-(defn <clock-2> []
-  [:div
-   "clock:"
-   @!tick])
-
-(defn <root>
-  []
-  (r/with-let [!timer (atom nil)]
-    [:div {:ref (fn [e]
-                  (if e
-                    (reset! !timer (js/setInterval (fn []
-                                                     (swap! !tick inc)
-                                                     (js/console.log @!tick))
-                                                   1000))
-                    (js/clearInterval @!timer)))}
-     [:h1 "Hello"]
-     [<clock-1>]
-     [<clock-2>]]))
+(defn <root> []
+  [:> recoil/RecoilRoot
+   [:f> <main>]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ^:export main []
-  (r/render [<root>] (js/document.getElementById "app"))
 
-  #_(t/run-tests 'scrap.dijkstra))
+(defn ^:export main []
+  (rdom/render [:f> <root>] (js/document.getElementById "app")))

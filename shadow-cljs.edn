@@ -5,7 +5,10 @@
   "src/test"]
 
  :dependencies
- [[reagent "0.9.1"]]
+ [[reagent "1.0.0-alpha2"
+   :exclusions [cljsjs/react cljsjs/react-dom]]]
+
+ :dev-http {8000 "public"}
 
  :builds
  {:node {:target :node-script
