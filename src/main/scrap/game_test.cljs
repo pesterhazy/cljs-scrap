@@ -5,6 +5,6 @@
 (t/deftest t
   (let [game (g/make-game)
         _ (t/is (= (repeat 6 nil) (g/die-vals game)))
-        game (g/roll game)
+        game (g/roll game g/rand-roller)
         ;; FIXME: better test?
         _ (t/is (every? some? (g/die-vals game)))]))
