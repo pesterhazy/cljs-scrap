@@ -2,13 +2,18 @@
   (:require [clojure.pprint]))
 
 (defn make-game []
-  {:die-vals (vec (repeat 6 nil))})
+  {:die-vals (vec (repeat 6 nil))
+   :n-rolls 0})
 
 (defn die-vals [game]
   (:die-vals game))
 
 (defn roll [game roll-fn]
-  (assoc game :die-vals (vec (repeatedly 5 roll-fn))))
+  (when (>= (:n-rolls game) 3)
+    (throw (ex-info "Ran out of rolls" {})))
+  (-> game
+      (assoc :die-vals (vec (repeatedly 5 roll-fn)))
+      (update :n-rolls inc)))
 
 (defn rand-roller []
   (fn [] (inc (rand-int 6))))
