@@ -24,7 +24,10 @@
      [:div
       [<die-set> (g/die-vals game)]]
      [:div.menu
-      [:a.menu-item.button "Start"]
+      [:a.menu-item.button
+       {:on-click (fn []
+                    (swap! !game g/reset))}
+       "Start"]
       [:a.menu-item.button
        {:on-click (fn []
                     (swap! !game (fn [game] (g/roll game (g/rand-roller)))))}
