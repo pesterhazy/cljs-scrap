@@ -7,6 +7,8 @@
  :dependencies
  [[reagent "0.9.1"]]
 
+ :dev-http {8080 "public"}
+
  :builds
  {:node {:target :node-script
          :devtools {:after-load scrap.scrap/main}
