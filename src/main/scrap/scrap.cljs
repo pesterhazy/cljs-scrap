@@ -4,6 +4,8 @@
             [clojure.pprint]
             [reagent.core :as r]))
 
+;; TODO: when I click roll, I get a new set of dice
+
 (defn <die>
   [die-val]
   [:img.die
@@ -24,7 +26,6 @@
     [:a.menu-item.button "Roll"]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ^:export main []
-  (r/render [<root>] (js/document.getElementById "app"))
 
-  #_(t/run-tests 'scrap.dijkstra))
+(defn ^:export main []
+  (r/render [<root>] (js/document.getElementById "app")))
