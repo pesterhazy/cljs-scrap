@@ -5,8 +5,6 @@
             [reagent.core :as r]
             [scrap.game :as g]))
 
-;; TODO: when I click roll, I get a new set of dice
-
 (defn <die>
   [die-val]
   [:img.die
