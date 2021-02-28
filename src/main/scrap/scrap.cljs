@@ -4,13 +4,18 @@
             [clojure.pprint]
             [reagent.core :as r]))
 
-(defn <die> [n]
-  [:img.die {:src (str "assets/" n ".png")}])
+(defn <die> [die-val]
+  [:img.die {:src (str "assets/" die-val ".png")}])
+
+(defn <die-set> [die-vals]
+  (->> die-vals
+       (map (fn [die-val] [<die> die-val]))
+       (into [:div])))
 
 (defn <root>
   []
   [:div
-   [<die> 1]])
+   [<die-set> (range 1 7)]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
