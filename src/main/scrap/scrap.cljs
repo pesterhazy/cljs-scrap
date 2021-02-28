@@ -15,7 +15,11 @@
 (defn <root>
   []
   [:div
-   [<die-set> (range 1 7)]])
+   [:div
+    [<die-set> (range 1 7)]]
+   [:div.menu
+    [:a.menu-item.button "Start"]
+    [:a.menu-item.button "Roll"]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
