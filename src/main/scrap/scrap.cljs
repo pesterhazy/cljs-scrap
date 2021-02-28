@@ -4,8 +4,10 @@
             [clojure.pprint]
             [reagent.core :as r]))
 
-(defn <die> [die-val]
-  [:img.die {:src (str "assets/" die-val ".png")}])
+(defn <die>
+  [die-val]
+  [:img.die
+   {:src (str "assets/" (if (nil? die-val) "question" die-val) ".png")}])
 
 (defn <die-set> [die-vals]
   (->> die-vals
@@ -16,7 +18,7 @@
   []
   [:div
    [:div
-    [<die-set> (range 1 7)]]
+    [<die-set> (repeat 6 nil)]]
    [:div.menu
     [:a.menu-item.button "Start"]
     [:a.menu-item.button "Roll"]]])
