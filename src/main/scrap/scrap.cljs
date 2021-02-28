@@ -2,7 +2,8 @@
   (:require-macros [scrap.ppp])
   (:require [clojure.test :as t]
             [clojure.pprint]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [scrap.game :as g]))
 
 ;; TODO: when I click roll, I get a new set of dice
 
@@ -16,14 +17,19 @@
        (map (fn [die-val] [<die> die-val]))
        (into [:div])))
 
+(defonce !game (r/atom (g/make-game)))
+
 (defn <root>
   []
   [:div
    [:div
-    [<die-set> (repeat 6 nil)]]
+    [<die-set> (g/die-vals @!game)]]
    [:div.menu
     [:a.menu-item.button "Start"]
-    [:a.menu-item.button "Roll"]]])
+    [:a.menu-item.button
+     {:on-click (fn []
+                  (swap! !game (fn [game] (g/roll game (g/rand-roller)))))}
+     "Roll"]]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

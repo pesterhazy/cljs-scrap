@@ -8,9 +8,7 @@
   (:die-vals game))
 
 (defn roll [game roll-fn]
-  (assoc game :die-vals (->> (repeatedly roll-fn)
-                             (take 5)
-                             vec)))
+  (assoc game :die-vals (vec (repeatedly 5 roll-fn))))
 
 (defn rand-roller []
   (fn [] (inc (rand-int 6))))
