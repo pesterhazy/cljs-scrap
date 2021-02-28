@@ -4,9 +4,13 @@
             [clojure.pprint]
             [reagent.core :as r]))
 
+(defn <die> [n]
+  [:img.die {:src (str "assets/" n ".png")}])
+
 (defn <root>
   []
-  [:div "hello"])
+  [:div
+   [<die> 1]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ^:export main []
