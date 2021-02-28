@@ -1,22 +1,18 @@
 ;; shadow-cljs configuration
-{:source-paths
- ["src/dev"
-  "src/main"
-  "src/test"]
-
- :dependencies
- [[reagent "0.9.1"]]
-
- :dev-http {8080 "public"}
-
- :builds
- {:node {:target :node-script
-         :devtools {:after-load scrap.scrap/main}
-         :main scrap.scrap/main
-         :output-to "node-out/out.js"}
-  :browser {:target :browser
-            :output-dir "public/js"
-            :asset-path "/js"
-            :build-hooks [(scrap.ppp/load-env)]
-            :devtools {:after-load scrap.scrap/main}
-            :modules {:main {:entries [scrap.scrap]}}}}}
+{:builds {:browser {:asset-path "/js",
+                    :build-hooks [(scrap.ppp/load-env)],
+                    :devtools {:after-load scrap.scrap/main},
+                    :modules {:main {:entries [scrap.scrap]}},
+                    :output-dir "public/js",
+                    :target :browser},
+          :node {:devtools {:after-load scrap.scrap/main},
+                 :main scrap.scrap/main,
+                 :output-to "node-out/out.js",
+                 :target :node-script},
+          :test {:devtools {:http-port 8021,
+                            :http-root "public-test/js/test"},
+                 :target :browser-test,
+                 :test-dir "public-test/js/test"}},
+ :dependencies [[reagent "0.9.1"]],
+ :dev-http {8080 "public"},
+ :source-paths ["src/dev" "src/main" "src/test"]}
