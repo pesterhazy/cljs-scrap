@@ -4,8 +4,6 @@
             [clojure.pprint]
             [reagent.core :as r]))
 
-;; TODO: remove unnecessary files
-
 (defn <die>
   [die-val]
   [:img.die
