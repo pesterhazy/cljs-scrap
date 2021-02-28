@@ -19,7 +19,8 @@
 
 (defn <root>
   []
-  (let [game @!game]
+  (let [game @!game
+        can-roll? (g/can-roll? game)]
     [:div
      [:div
       [<die-set> (g/die-vals game)]]
@@ -29,8 +30,10 @@
                     (swap! !game g/reset))}
        "Start"]
       [:a.menu-item.button
-       {:on-click (fn []
-                    (swap! !game (fn [game] (g/roll game (g/rand-roller)))))}
+       {:class (when-not can-roll? :disabled)
+        :on-click (when can-roll?
+                    (fn []
+                      (swap! !game (fn [game] (g/roll game (g/rand-roller))))))}
        "Roll"]]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

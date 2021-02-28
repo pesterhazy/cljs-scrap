@@ -3,7 +3,7 @@
 
 (def empty-game
   {:started? false
-   :die-vals (vec (repeat 6 nil))
+   :die-vals (vec (repeat 5 nil))
    :n-rolls 0})
 
 (defn make-game []
@@ -14,6 +14,9 @@
 
 (defn die-vals [game]
   (:die-vals game))
+
+(defn can-roll? [game]
+  (and (:started? game) (< (:n-rolls game) 3)))
 
 (defn roll [game roll-fn]
   (when-not (:started? game)
